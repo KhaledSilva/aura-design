@@ -455,6 +455,8 @@
         object-fit: cover;
         display: block;
         background: #060608;
+        opacity: 0;
+        transition: opacity 0.3s ease;
       }
 
       .build-overlay {
@@ -671,7 +673,7 @@
       <section class="section build-sequence-section" id="process">
         <div class="container build-shell">
           <div class="build-stage">
-            <video class="build-video" id="buildVideo" muted playsinline preload="auto" poster="assets/projeto-sala.png">
+            <video class="build-video" id="buildVideo" muted playsinline preload="auto">
               <source src="assets/video-camadas.mp4" type="video/mp4" />
             </video>
             <div class="build-overlay"></div>
@@ -877,7 +879,7 @@
         gsap.set(sequenceCards, { opacity: 0, y: 24 });
 
         const startSequence = () => {
-          const duration = Number.isFinite(buildVideo.duration) ? buildVideo.duration : 6;
+          const duration = Number.isFinite(buildVideo.duration) && buildVideo.duration > 0 ? buildVideo.duration : 6;
           const totalDistance = Math.max(window.innerHeight * 2.6, duration * 700);
           buildSection.style.minHeight = `${totalDistance + window.innerHeight}px`;
 
@@ -887,7 +889,7 @@
             end: `+=${totalDistance}`,
             scrub: 1,
             pin: buildStage,
-            pinSpacing: false,
+            pinSpacing: true,
             anticipatePin: 1,
             onUpdate: (self) => {
               if (buildVideo.readyState >= 2) {
@@ -910,6 +912,8 @@
             .to(sequenceCards[1], { opacity: 0, y: -12, ease: 'power2.in' }, 0.64)
             .to(sequenceCards[2], { opacity: 1, y: 0, ease: 'power2.out' }, 0.76)
             .to(sequenceCards[2], { opacity: 0, y: -12, ease: 'power2.in' }, 1.0);
+
+          ScrollTrigger.refresh();
         };
 
         buildVideo.load();
@@ -921,10 +925,19 @@
         }
       };
 
-      if (document.readyState === 'complete') {
+      const showBuildVideo = () => {
+        buildVideo.style.opacity = '1';
+      };
+
+      if (document.readyState !== 'loading') {
         initBuildSequence();
       } else {
-        window.addEventListener('load', initBuildSequence, { once: true });
+        window.addEventListener('DOMContentLoaded', initBuildSequence, { once: true });
+      }
+
+      buildVideo.addEventListener('loadeddata', showBuildVideo, { once: true });
+      if (buildVideo.readyState >= 2) {
+        showBuildVideo();
       }
 
       window.addEventListener('resize', () => ScrollTrigger.refresh());
